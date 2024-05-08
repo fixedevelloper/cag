@@ -1,0 +1,14 @@
+.img-60{
+    width: 60px !important;
+}
+.img-20{
+    width: 20px !important;
+}
+.modal {
+    height: auto !important;
+    max-width: 600px !important;
+}
+.modal a.close-modal {
+    top: -9.5px !important;
+    right: -9.5px !important;
+}
