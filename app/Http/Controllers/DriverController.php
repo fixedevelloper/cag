@@ -4,6 +4,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Helpers\Helper;
 use App\Helpers\UploadableTrait;
 use App\Models\Annonce;
 use App\Models\City;
@@ -11,6 +12,7 @@ use App\Models\DriverVehicle;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class DriverController extends Controller
 {
@@ -35,6 +37,15 @@ use UploadableTrait;
     public function create_announce(Request $request)
     {
         if ($request->method()=="POST"){
+            $validator = Validator::make($request->all(), [
+                'driver_vehicle_id' => 'required',
+                'city_from_id' => 'required',
+                'city_to_id' => 'required',
+                'price' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(['errors' => Helper::error_processor($validator)], 403);
+            }
             $annonce=new Annonce();
             $annonce->city_from_id=$request->city_from_id;
             $annonce->city_to_id=$request->city_to_id;

@@ -66,32 +66,45 @@ class AnnonceController extends  BaseController
         $departure=$request->get('depature_id');
         $arrival=$request->get('arrival_id');
         $date=$request->get('date');
-        $annonces=Annonce::query()->where('date_start','>=',$date)
-            ->where(['city_from_id'=>$departure,'city_to_id'=>$arrival])->orderByDesc('created_at')->get();
-        $list=[];
-        foreach ($annonces as $annonce){
-            $list[]=[
-                'id'=>$annonce->id,
-               'driver_name'=>$annonce->driver->first_name.' '.$annonce->driver->last_name,
-               'driver_id'=>$annonce->driver->id,
-                'city_from_id'=>$annonce->city_from_id,
-                'city_from_name'=>$annonce->city_from->name,
-                'city_to_id'=>$annonce->city_to_id,
-                'city_to_name'=>$annonce->city_to->name,
-                'number_person'=>$annonce->number_person,
-                'reserved_place'=>$annonce->reserved_place,
-                'driver_vehicle_id'=>$annonce->driver_vehicle_id,
-                'driver_vehicle_brand'=>$annonce->driver_vehicle->brand,
-                'distance'=>$annonce->distance,
-                'price'=>$annonce->price,
-                'namedeparture_place'=>$annonce->namedeparture_place,
-                'departure_latitude'=>$annonce->departure_latitude,
-                'departure_longitude'=>$annonce->departure_longitude,
-                'time_start'=>$annonce->time_start,
-                'date_start'=>$annonce->date_start,
+        logger($date);
+        try {
+            $annonces=Annonce::query()->where('date_start','>=',$date)
+                ->where(['city_from_id'=>$departure,'city_to_id'=>$arrival])->orderByDesc('created_at')->get();
+            $list=[];
+            foreach ($annonces as $annonce){
+                $list[]=[
+                    'id'=>$annonce->id,
+                    'driver_name'=>$annonce->driver->first_name.' '.$annonce->driver->last_name,
+                    'driver_id'=>$annonce->driver->id,
+                    'city_from_id'=>$annonce->city_from_id,
+                    'city_from_name'=>$annonce->city_from->name,
+                    'city_to_id'=>$annonce->city_to_id,
+                    'city_to_name'=>$annonce->city_to->name,
+                    'number_person'=>$annonce->number_person,
+                    'reserved_place'=>$annonce->reserved_place,
+                    'driver_vehicle_id'=>$annonce->driver_vehicle_id,
+                    'vehicle_brand'=>$annonce->driver_vehicle->brand,
+                    'vehicle_color'=>$annonce->driver_vehicle->color,
+                    'vehicle_image_from'=>'storage/'.$annonce->driver_vehicle->image_from,
+                    'vehicle_image_back'=>'storage/'.$annonce->driver_vehicle->image_back,
+                    'vehicle_image_left'=>'storage/'.$annonce->driver_vehicle->image_left,
+                    'vehicle_image_right'=>'storage/'.$annonce->driver_vehicle->image_right,
+                    "vehicle_number"=>$annonce->driver_vehicle->number,
+                    'distance'=>$annonce->distance,
+                    'price'=>$annonce->price,
+                    'namedeparture_place'=>$annonce->namedeparture_place,
+                    'departure_latitude'=>$annonce->departure_latitude,
+                    'departure_longitude'=>$annonce->departure_longitude,
+                    'time_start'=>$annonce->time_start,
+                    'date_start'=>$annonce->date_start,
 
-            ];
+                ];
+            }
+        }catch (\Exception $exception){
+            logger($exception);
+           return $this->sendError($exception->getMessage(),[$exception->getMessage()]);
         }
+
         return $this->sendResponse($list, 'request successfully.');
     }
     public function seletedAnnonce(Request $request){
@@ -118,7 +131,7 @@ class AnnonceController extends  BaseController
             $seleted->customer_id=$request->customer_id;
             $seleted->method_payment=$request->method_payment;
             $seleted->passenger=$request->number_place;
-            $seleted->total=$request->total;
+            $seleted->total=$anounce->price*$request->number_place;
            $seleted->code_follow=Helper::generatenumber();
             $seleted->save();
        // }

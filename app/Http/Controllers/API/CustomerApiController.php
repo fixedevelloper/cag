@@ -45,7 +45,13 @@ class CustomerApiController extends BaseController
                 'number_person'=>$annonce->number_person,
                 'reserved_place'=>$annonce->reserved_place,
                 'driver_vehicle_id'=>$annonce->driver_vehicle_id,
-                'driver_vehicle_brand'=>$annonce->driver_vehicle->brand,
+                'vehicle_brand'=>$annonce->driver_vehicle->brand,
+                'vehicle_color'=>$annonce->driver_vehicle->color,
+                'vehicle_image_from'=>'storage/'.$annonce->driver_vehicle->image_from,
+                'vehicle_image_back'=>'storage/'.$annonce->driver_vehicle->image_back,
+                'vehicle_image_left'=>'storage/'.$annonce->driver_vehicle->image_left,
+                'vehicle_image_right'=>'storage/'.$annonce->driver_vehicle->image_right,
+                "vehicle_number"=>$annonce->driver_vehicle->number,
                 'distance'=>$annonce->distance,
                 'price'=>$annonce->price,
                 'namedeparture_place'=>$annonce->namedeparture_place,
@@ -56,6 +62,39 @@ class CustomerApiController extends BaseController
 
             ];
         }
+        return $this->sendResponse($list, 'request successfully.');
+    }
+    public function announceByCode(Request $request,$code){
+
+        $annonceselect=AnnonceSelected::query()->firstWhere('code_follow','=',$code);
+
+            $annonce=$annonceselect->annonce;
+            $list=[
+                'id'=>$annonceselect->id,
+                'code_follow'=>$annonceselect->code_follow,
+                'total'=>$annonceselect->total,
+                'passenger'=>$annonceselect->passenger,
+                'method_payment'=>$annonceselect->method_payment,
+                'announce_id'=>$annonce->id,
+                'driver_name'=>$annonce->driver->first_name.' '.$annonce->driver->last_name,
+                'driver_id'=>$annonce->driver->id,
+                'city_from_id'=>$annonce->city_from_id,
+                'city_from_name'=>$annonce->city_from->name,
+                'city_to_id'=>$annonce->city_to_id,
+                'city_to_name'=>$annonce->city_to->name,
+                'number_person'=>$annonce->number_person,
+                'reserved_place'=>$annonce->reserved_place,
+                'driver_vehicle_id'=>$annonce->driver_vehicle_id,
+                'driver_vehicle_brand'=>$annonce->driver_vehicle->brand,
+                'distance'=>$annonce->distance,
+                'price'=>$annonce->price,
+                'namedeparture_place'=>$annonce->namedeparture_place,
+                'departure_latitude'=>$annonce->departure_latitude,
+                'departure_longitude'=>$annonce->departure_longitude,
+                'time_start'=>$annonce->time_start,
+                'date_start'=>$annonce->date_start,
+                ];
+
         return $this->sendResponse($list, 'request successfully.');
     }
     function createCustomer(Request $request){
@@ -69,24 +108,36 @@ class CustomerApiController extends BaseController
         ]);
 
         if ($validator->fails()) {
-            return $this->sendError($validator->errors()->getMessages(),Helper::error_processor($validator),403);
-            //return response()->json(['errors' => Helper::error_processor($validator)], 403);
+            return $this->sendError( $validator->errors()->getMessages(), 403);
         }
-        $customer=new User();
-        $customer->first_name=$request->first_name;
-        $customer->phone=$request->phone;
-        $customer->last_name=$request->last_name;
-        $customer->email=$request->email;
-        if($request->has('date_born')) {
-            $customer->date_born = $request->date_born;
+        try {
+
+            $customer = new User();
+            $customer->first_name = $request->first_name;
+            $customer->phone = $request->phone;
+            $customer->last_name = $request->last_name;
+            $customer->email = $request->email;
+            if ($request->has('date_born')) {
+                $customer->date_born = $request->date_born;
+            }
+            $customer->password = bcrypt($request->get('password'));
+            $customer->user_type = User::CUSTOMER_TYPE;
+            if ($request->has('photo')) {
+                $customer->photo = $this->uploadOne($request->file('photo'), 'customers');
+            }
+            $customer->save();
+            $customer->update(['last_active_at' => now()]);
+            $success['token'] = $customer->createToken('ApiToken')->plainTextToken;
+            $success['first_name'] = $customer->first_name;
+            $success['last_name'] = $customer->last_name;
+            $success['phone'] = $customer->phone;
+            $success['photo'] = $customer->photo;
+            $success['id'] = $customer->id;
+            $success['user_type'] = $customer->user_type;
+        }catch (\Exception $exception){
+            $this->sendError($exception->getMessage());
         }
-        $customer->password = bcrypt($request->get('password'));
-        $customer->user_type=User::CUSTOMER_TYPE;
-        if($request->has('photo')){
-            $customer->photo = $this->uploadOne($request->file('photo'), 'customers');
-        }
-        $customer->save();
-        return $this->sendResponse($customer, 'request successfully.');
+        return $this->sendResponse($success, 'request successfully.');
     }
     function getPositionDriverByPlace(Request $request){
         $start_latitude=$request->start_latitude;

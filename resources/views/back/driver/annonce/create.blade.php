@@ -79,7 +79,7 @@
                         </div>
                         <div class="card-body">
                             <div class="input-group">
-                                <select class="form-select wide" aria-label="Default select example">
+                                <select class="form-select wide" aria-label="Default select example" name="driver_vehicle_id">
                                     <option selected>Choose...</option>
                                     @foreach($vehicles as $vehicle)
                                         <option value="1">{!! $vehicle->brand  !!}</option>

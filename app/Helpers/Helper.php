@@ -37,14 +37,22 @@ class Helper
 
         return $imageName;
     }
-    public static function getWallet($id){
-        $wallet=Wallet::query()->firstWhere(['user_id'=>Auth::user()->id,'crypto_id'=>$id]);
-        return $wallet;
-    }
-    public static function getWalletHome($id,$userid){
-        $wallet=Wallet::query()->firstWhere(['user_id'=>$userid,'crypto_id'=>$id]);
-        return $wallet;
-    }
+   public static function base64Tofile($dir,$data){
+       $image_base64 = base64_decode($data['image']);
+       if ($data['image_type'] === 'image/png') {
+          $imageName = \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . '.png';
+       }elseif ($data['image_type'] === 'image/jpeg'){
+            $imageName = \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . '.jpeg';
+       } else {
+           $imageName = \Carbon\Carbon::now()->toDateString() . "-" . uniqid() . '.jpg';
+       }
+       if (!Storage::disk('public')->exists($dir)) {
+           Storage::disk('public')->makeDirectory($dir);
+       }
+       Storage::disk('public')->put($dir . $imageName, $image_base64);
+       return $dir.'/'.$imageName;
+
+   }
     public static function generatenumber()
     {
         $tabs=['1','2','3','4','5','6','7','8','9','0'];
@@ -79,5 +87,9 @@ class Helper
         $constant['content'] = $content;
         $constant['errors'] = $errors;
         return $constant;
+    }
+    public static function getAge($date){
+        $le=Carbon::createFromFormat("Y-m-d",$date);
+        return Carbon::now()->diffInYears($le);
     }
 }
